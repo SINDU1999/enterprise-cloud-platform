@@ -46,3 +46,7 @@ variable "availability_zone_2" {
   description = "Secondary Availability Zone"
   type        = string
 }
+variable "project_code" {
+  description = "Short project code used for AWS resource names"
+  type        = string
+}

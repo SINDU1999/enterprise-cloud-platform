@@ -23,4 +23,12 @@ module "security_groups" {
   project_name = var.project_name
   environment  = var.environment
 }
+module "iam" {
+
+  source = "../../modules/iam"
+
+  project_name = var.project_name
+  project_code = var.project_code
+  environment  = var.environment
+}
   
