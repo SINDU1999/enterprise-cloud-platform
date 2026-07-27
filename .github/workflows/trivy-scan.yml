@@ -1,0 +1,27 @@
+name: Trivy Security Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  trivy-scan:
+    name: Scan Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: docker build -t enterprise-cloud-platform ./docker
+
+      - name: Run Trivy Scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: enterprise-cloud-platform
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
