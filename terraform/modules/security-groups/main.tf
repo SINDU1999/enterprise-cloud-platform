@@ -83,10 +83,10 @@ resource "aws_security_group" "eks_nodes" {
 # Allow HTTP traffic from ALB to EKS Worker Nodes
 resource "aws_security_group_rule" "alb_to_nodes_http" {
 
-  type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
-  protocol                 = "tcp"
+  type      = "ingress"
+  from_port = 80
+  to_port   = 80
+  protocol  = "tcp"
 
   security_group_id        = aws_security_group.eks_nodes.id
   source_security_group_id = aws_security_group.alb.id
@@ -97,10 +97,10 @@ resource "aws_security_group_rule" "alb_to_nodes_http" {
 # Allow Worker Nodes to communicate with EKS Control Plane
 resource "aws_security_group_rule" "nodes_to_cluster_https" {
 
-  type                     = "ingress"
-  from_port                = 443
-  to_port                  = 443
-  protocol                 = "tcp"
+  type      = "ingress"
+  from_port = 443
+  to_port   = 443
+  protocol  = "tcp"
 
   security_group_id        = aws_security_group.eks_cluster.id
   source_security_group_id = aws_security_group.eks_nodes.id
@@ -111,10 +111,10 @@ resource "aws_security_group_rule" "nodes_to_cluster_https" {
 # Allow communication between Worker Nodes
 resource "aws_security_group_rule" "node_to_node" {
 
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 65535
-  protocol          = "tcp"
+  type      = "ingress"
+  from_port = 0
+  to_port   = 65535
+  protocol  = "tcp"
 
   security_group_id = aws_security_group.eks_nodes.id
   self              = true
