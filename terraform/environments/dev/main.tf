@@ -42,8 +42,13 @@ module "eks" {
   cluster_role_arn = module.iam.eks_cluster_role_arn
   node_role_arn    = module.iam.eks_node_role_arn
 
-  private_subnet_ids = module.vpc.private_subnet_ids
-
+  private_subnet_ids        = module.vpc.private_subnet_ids
   cluster_security_group_id = module.security_groups.eks_cluster_security_group_id
+
+  node_instance_type = var.node_instance_type
+  desired_size       = var.desired_size
+  min_size           = var.min_size
+  max_size           = var.max_size
+  disk_size          = var.disk_size
 }
   

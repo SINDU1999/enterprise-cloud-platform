@@ -50,3 +50,22 @@ variable "project_code" {
   description = "Short project code used for AWS resource names"
   type        = string
 }
+variable "node_instance_type" {
+  type = string
+}
+
+variable "desired_size" {
+  type = number
+}
+
+variable "min_size" {
+  type = number
+}
+
+variable "max_size" {
+  type = number
+}
+
+variable "disk_size" {
+  type = number
+}
