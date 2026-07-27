@@ -31,4 +31,19 @@ module "iam" {
   project_code = var.project_code
   environment  = var.environment
 }
+module "eks" {
+
+  source = "../../modules/eks"
+
+  project_name = var.project_name
+  project_code = var.project_code
+  environment  = var.environment
+
+  cluster_role_arn = module.iam.eks_cluster_role_arn
+  node_role_arn    = module.iam.eks_node_role_arn
+
+  private_subnet_ids = module.vpc.private_subnet_ids
+
+  cluster_security_group_id = module.security_groups.eks_cluster_security_group_id
+}
   
