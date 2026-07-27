@@ -1,0 +1,21 @@
+replicaCount: 3
+
+image:
+  repository: 908209635299.dkr.ecr.ap-south-1.amazonaws.com/enterprise-cloud-platform
+  tag: "v2"
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+namespace: demo

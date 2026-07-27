@@ -2,20 +2,15 @@ apiVersion: v1
 kind: Service
 
 metadata:
-  name: nginx-service
+  name: enterprise-cloud-platform-service
   namespace: demo
-
-  labels:
-    app: nginx
-    environment: dev
 
 spec:
   type: LoadBalancer
 
   selector:
-    app: nginx
+    app: enterprise-cloud-platform
 
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
+  - port: 80
+    targetPort: 80

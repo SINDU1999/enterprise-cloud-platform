@@ -2,19 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: enterprise-cloud-platform
-  namespace: demo
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
 
   labels:
-    app: enterprise-cloud-platform
-    environment: dev
+    app: {{ .Release.Name }}
 
 spec:
-  replicas: 3
+  replicas: {{ .Values.replicaCount }}
 
   selector:
     matchLabels:
-      app: enterprise-cloud-platform
+      app: {{ .Release.Name }}
 
   strategy:
     type: RollingUpdate
@@ -24,30 +23,33 @@ spec:
       maxUnavailable: 1
 
   template:
+
     metadata:
       labels:
-        app: enterprise-cloud-platform
-        environment: dev
+        app: {{ .Release.Name }}
 
     spec:
+
       containers:
-      - name: enterprise-cloud-platform
 
-        image: 908209635299.dkr.ecr.ap-south-1.amazonaws.com/enterprise-cloud-platform:v1
+      - name: {{ .Release.Name }}
 
-        imagePullPolicy: Always
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
 
         ports:
         - containerPort: 80
 
         resources:
+
           requests:
-            cpu: "100m"
-            memory: "128Mi"
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
 
           limits:
-            cpu: "250m"
-            memory: "256Mi"
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
 
         readinessProbe:
           httpGet:
