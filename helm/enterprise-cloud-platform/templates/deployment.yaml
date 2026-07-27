@@ -9,7 +9,9 @@ metadata:
     app: {{ .Release.Name }}
 
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
 
   selector:
     matchLabels:

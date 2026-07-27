@@ -1,4 +1,4 @@
-replicaCount: 5
+replicaCount: 2
 
 image:
   repository: 908209635299.dkr.ecr.ap-south-1.amazonaws.com/enterprise-cloud-platform
@@ -17,5 +17,11 @@ resources:
   limits:
     cpu: 250m
     memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
 
 namespace: demo
