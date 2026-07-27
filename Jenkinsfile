@@ -58,9 +58,9 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 sh '''
-                kubectl rollout status deployment/${HELM_RELEASE}
-                kubectl get pods
-                kubectl get svc
+                kubectl rollout status deployment/${HELM_RELEASE} -n demo
+                kubectl get pods -n demo
+                kubectl get svc -n demo
                 '''
             }
         }
