@@ -1,0 +1,20 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  pull-request-validation:
+    name: Validate Pull Request
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Display PR Validation Message
+        run: |
+          echo "Pull Request validation started..."
+          echo "All GitHub Actions checks must pass before merge."
