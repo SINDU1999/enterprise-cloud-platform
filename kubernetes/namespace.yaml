@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: demo
+
+  labels:
+    app: enterprise-cloud-platform
+    environment: dev
+    managed-by: git

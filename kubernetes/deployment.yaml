@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: nginx
+  namespace: demo
+
+  labels:
+    app: nginx
+    environment: dev
+
+spec:
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: nginx
+
+  strategy:
+    type: RollingUpdate
+
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+
+  template:
+
+    metadata:
+      labels:
+        app: nginx
+        environment: dev
+
+    spec:
+
+      containers:
+
+      - name: nginx
+
+        image: nginx:latest
+
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 80
+
+        resources:
+
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+
+          initialDelaySeconds: 15
+          periodSeconds: 20
