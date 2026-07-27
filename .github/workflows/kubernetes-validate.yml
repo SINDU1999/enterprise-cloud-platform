@@ -1,4 +1,4 @@
-name: Kubernetes Manifest Validation
+name: Helm Lint
 
 on:
   push:
@@ -7,17 +7,17 @@ on:
   pull_request:
 
 jobs:
-  validate-kubernetes:
-    name: Validate Kubernetes Manifests
+  helm-lint:
+    name: Lint Helm Chart
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+      - name: Install Helm
+        uses: azure/setup-helm@v4
 
-      - name: Validate Kubernetes YAML
+      - name: Lint Helm Chart
         run: |
-          kubectl apply --dry-run=client --validate=true -f kubernetes/
+          helm lint ./helm/enterprise-cloud-platform
