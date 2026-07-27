@@ -1,4 +1,4 @@
-replicaCount: 3
+replicaCount: 5
 
 image:
   repository: 908209635299.dkr.ecr.ap-south-1.amazonaws.com/enterprise-cloud-platform
