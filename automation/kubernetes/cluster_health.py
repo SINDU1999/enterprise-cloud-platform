@@ -12,6 +12,9 @@ import os
 import time
 import sys
 import json
+from kubernetes.client import CustomObjectsApi
+from automation.aws.s3_upload import upload_to_s3
+from automation.aws.sns_notification import send_notification
 # ==========================================================
 # Script Start Time
 # ==========================================================
@@ -61,7 +64,16 @@ JSON_REPORT_FILE = os.path.join(
     REPORT_DIR,
     f"cluster_health_{REPORT_TIME.strftime('%Y%m%d_%H%M%S')}.json"
 )
+# ==========================================================
+# AWS S3 Configuration
+# ==========================================================
 
+S3_BUCKET_NAME = "enterprise-cloud-health-reports-908209635299"
+# ==========================================================
+# AWS SNS Configuration
+# ==========================================================
+
+SNS_TOPIC_ARN = "arn:aws:sns:ap-south-1:908209635299:enterprise-cluster-health-alerts"
 # ==========================================================
 # Helper Functions
 # ==========================================================
@@ -105,6 +117,8 @@ class DualOutput:
         self.terminal.flush()
         self.log.flush()
 
+    def close(self):
+        self.log.close()
 
 
 # ==========================================================
@@ -222,6 +236,286 @@ def node_health():
 }
 
     return ready_nodes, not_ready_nodes
+
+# ==========================================================
+# Metric Conversion Helpers
+# ==========================================================
+
+def format_cpu(cpu_value):
+    """
+    Convert Kubernetes CPU values to millicores (m).
+    """
+
+    if cpu_value.endswith("n"):
+        milli = int(cpu_value[:-1]) / 1_000_000
+
+        if milli < 1:
+            return f"{milli:.2f}m"
+
+        return f"{milli:.0f}m"
+
+    return cpu_value
+
+
+def format_memory(memory_value):
+    """
+    Convert Kubernetes memory values to Mi.
+    Example:
+        1474672Ki -> 1440Mi
+    """
+    if memory_value.endswith("Ki"):
+        return f"{int(memory_value[:-2]) // 1024}Mi"
+
+    return memory_value
+
+
+def node_resource_utilization():
+
+    print_title("NODE RESOURCE UTILIZATION")
+
+    custom_api = CustomObjectsApi()
+
+    metrics = custom_api.list_cluster_custom_object(
+        group="metrics.k8s.io",
+        version="v1beta1",
+        plural="nodes"
+    )
+
+    print(f"{'Node':<45} {'CPU':<10} {'Memory':<15}")
+    print("-" * 75)
+
+    node_metrics = []
+
+    for item in metrics["items"]:
+
+        node_name = item["metadata"]["name"]
+
+        cpu_raw = item["usage"]["cpu"]
+        memory_raw = item["usage"]["memory"]
+
+        cpu = format_cpu(cpu_raw)
+        memory = format_memory(memory_raw)
+
+        print(f"{node_name:<45} {cpu:<10} {memory:<15}")
+
+        node_metrics.append({
+            "node": node_name,
+            "cpu": {
+                "raw": cpu_raw,
+                "formatted": cpu
+           },
+           "memory": {
+               "raw": memory_raw,
+               "formatted": memory
+           }
+    })
+            
+        
+
+    report_data["node_resource_utilization"] = node_metrics
+
+def pod_resource_utilization():
+
+    print_title("POD RESOURCE UTILIZATION")
+
+    custom_api = CustomObjectsApi()
+
+    metrics = custom_api.list_cluster_custom_object(
+        group="metrics.k8s.io",
+        version="v1beta1",
+        plural="pods"
+    )
+
+    print(f"{'Namespace':<20} {'Pod':<45} {'CPU':<10} {'Memory':<10}")
+    print("-" * 90)
+
+    pod_metrics = []
+
+    for item in metrics["items"]:
+
+        namespace = item["metadata"]["namespace"]
+        pod_name = item["metadata"]["name"]
+
+        total_cpu = 0
+        total_memory = 0
+
+        for container in item["containers"]:
+
+            cpu_raw = container["usage"]["cpu"]
+            memory_raw = container["usage"]["memory"]
+
+            # Convert CPU
+            if cpu_raw.endswith("n"):
+                total_cpu += int(cpu_raw[:-1])
+
+            # Convert Memory
+            if memory_raw.endswith("Ki"):
+                total_memory += int(memory_raw[:-2])
+
+        cpu_formatted = format_cpu(f"{total_cpu}n")
+        memory_formatted = format_memory(f"{total_memory}Ki")
+
+        print(
+            f"{namespace:<20} "
+            f"{pod_name:<45} "
+            f"{cpu_formatted:<10} "
+            f"{memory_formatted:<10}"
+        )
+
+        pod_metrics.append({
+            "namespace": namespace,
+            "pod": pod_name,
+            "cpu": {
+                "raw": f"{total_cpu}n",
+                "formatted": cpu_formatted
+            },
+            "memory": {
+                "raw": f"{total_memory}Ki",
+                "formatted": memory_formatted
+            }
+        })
+
+    report_data["pod_resource_utilization"] = pod_metrics
+
+def namespace_resource_usage():
+
+    print_title("NAMESPACE RESOURCE USAGE")
+
+    print(f"{'Namespace':<20} {'CPU Usage':<15} {'Memory Usage':<15}")
+    print("-" * 55)
+
+    namespace_usage = {}
+
+    # Reuse pod metrics already collected
+    for pod in report_data["pod_resource_utilization"]:
+
+        namespace = pod["namespace"]
+
+        cpu = float(pod["cpu"]["formatted"].replace("m", ""))
+        memory = float(pod["memory"]["formatted"].replace("Mi", ""))
+
+        if namespace not in namespace_usage:
+            namespace_usage[namespace] = {
+                "cpu": 0.0,
+                "memory": 0.0
+            }
+
+        namespace_usage[namespace]["cpu"] += cpu
+        namespace_usage[namespace]["memory"] += memory 
+
+        namespace_report = []
+
+    for namespace, usage in namespace_usage.items():
+
+        cpu = round(usage["cpu"], 2)
+        memory = round(usage["memory"], 2)
+
+        print(
+            f"{namespace:<20}"
+            f"{cpu:.2f}m"
+            f"{'':<6}"
+            f"{memory:.2f}Mi"
+      )
+
+        namespace_report.append({
+            "namespace": namespace,
+            "cpu": f"{cpu}m",
+            "memory": f"{memory}Mi"
+        })
+
+    report_data["namespace_resource_usage"] = namespace_report 
+
+def top_cpu_consumers():
+
+    print_title("TOP CPU CONSUMERS")
+
+    print(f"{'Rank':<6} {'Namespace':<18} {'Pod':<45} {'CPU':<10}")
+    print("-" * 85)
+
+    cpu_list = []
+
+    for pod in report_data["pod_resource_utilization"]:
+
+        cpu = float(pod["cpu"]["formatted"].replace("m", ""))
+
+        cpu_list.append({
+            "namespace": pod["namespace"],
+            "pod": pod["pod"],
+            "cpu": cpu
+        })
+
+    cpu_list = sorted(
+        cpu_list,
+        key=lambda x: x["cpu"],
+        reverse=True
+    )
+    top_cpu_report = []
+
+    for rank, pod in enumerate(cpu_list[:5], start=1):
+
+        print(
+            f"{rank:<6}"
+            f"{pod['namespace']:<18}"
+            f"{pod['pod']:<55}"
+            f"{pod['cpu']:>8.2f}m"
+       )
+
+        top_cpu_report.append({
+            "rank": rank,
+            "namespace": pod["namespace"],
+            "pod": pod["pod"],
+            "cpu": f"{pod['cpu']:.2f}m"
+        })
+
+    report_data["top_cpu_consumers"] = top_cpu_report 
+
+def top_memory_consumers():
+
+    print_title("TOP MEMORY CONSUMERS")
+
+    print(f"{'Rank':<6} {'Namespace':<18} {'Pod':<55} {'Memory':<10}")
+    print("-" * 95)
+
+    memory_list = []
+
+    for pod in report_data["pod_resource_utilization"]:
+
+        memory = float(
+            pod["memory"]["formatted"].replace("Mi", "")
+        )
+
+        memory_list.append({
+            "namespace": pod["namespace"],
+            "pod": pod["pod"],
+            "memory": memory
+        })
+
+    memory_list = sorted(
+        memory_list,
+        key=lambda x: x["memory"],
+        reverse=True
+    ) 
+    top_memory_report = []
+
+    for rank, pod in enumerate(memory_list[:5], start=1):
+
+        print(
+            f"{rank:<6}"
+            f"{pod['namespace']:<18}"
+            f"{pod['pod']:<55}"
+            f"{pod['memory']:>8.2f}Mi"
+        )
+
+        top_memory_report.append({
+            "rank": rank,
+            "namespace": pod["namespace"],
+            "pod": pod["pod"],
+            "memory": f"{pod['memory']:.2f}Mi"
+        })
+
+    report_data["top_memory_consumers"] = top_memory_report       
+
+   
 # ==========================================================
 # Namespace Summary
 # ==========================================================
@@ -448,6 +742,67 @@ def pod_health():
         "oomkilled": oomkilled,
         "evicted": evicted,
     }
+def container_restart_analysis():
+
+    print_title("CONTAINER RESTART ANALYSIS")
+
+    v1 = client.CoreV1Api()
+
+    pods = v1.list_pod_for_all_namespaces().items
+
+    restarting_pods = []
+    total_restarting = 0
+
+    for pod in pods:
+
+        if not pod.status.container_statuses:
+            continue
+
+        for container in pod.status.container_statuses:
+
+            if container.restart_count > 0:
+
+                restarting_pods.append({
+                    "namespace": pod.metadata.namespace,
+                    "pod": pod.metadata.name,
+                    "container": container.name,
+                    "restarts": container.restart_count
+                })
+
+                total_restarting += 1
+
+    if restarting_pods:
+
+        print(f"{'Namespace':<20} {'Pod':<45} {'Container':<25} {'Restarts':>10}")
+        print("-" * 105)
+
+        for item in restarting_pods:
+
+            print(
+                f"{item['namespace']:<20} "
+                f"{item['pod']:<45} "
+                f"{item['container']:<25} "
+                f"{item['restarts']:>10}"
+            )
+
+    else:
+
+        print("✅ No container restarts detected.")
+
+    print("-" * 105)
+    print(f"Total Restarting Containers : {total_restarting}")
+
+    report_data["container_restart_analysis"] = {
+        "total_restarting_containers": total_restarting,
+        "details": restarting_pods
+    }
+    if total_restarting > 0:
+        issues.append({
+    "resource": "...",
+    "namespace": "...",
+    "name": "...",
+    "reason": "..."
+})
 # ==========================================================
 # Deployment Health
 # ==========================================================
@@ -758,6 +1113,7 @@ def overall_health():
             else "CRITICAL"
         )
     }
+# ==========================================================
 # Save JSON Report
 # ==========================================================
 
@@ -769,6 +1125,13 @@ def save_json_report():
 
     print(f"\n✅ JSON report saved to: {JSON_REPORT_FILE}")
 
+    upload_to_s3(
+        file_path=JSON_REPORT_FILE,
+        bucket_name=S3_BUCKET_NAME,
+        s3_key=f"reports/{os.path.basename(JSON_REPORT_FILE)}"
+    )    
+
+
 
 # ==========================================================
 # Main
@@ -779,38 +1142,82 @@ def main():
     sys.stdout = DualOutput(REPORT_FILE)
 
     cluster_information()
-
     node_health()
-
+    node_resource_utilization()
+    pod_resource_utilization()
+    namespace_resource_usage()
+    top_cpu_consumers()
+    top_memory_consumers()
     namespace_summary()
-
     pod_health()
-
+    container_restart_analysis()
     deployment_health()
-
     service_summary()
-
     persistent_volumes()
-
     persistent_volume_claims()
-
     statefulsets()
-
     daemonsets()
-
     hpa_health()
-
     warning_events()
-
     issues_summary()
-
     recommendations()
-
     overall_health()
 
+    # Flush everything written to the TXT report
+    sys.stdout.flush()
+
+    original_stdout = sys.stdout.terminal
+    sys.stdout.close()
+    sys.stdout = original_stdout
+
+    # Upload TXT Report
+    upload_to_s3(
+        file_path=REPORT_FILE,
+        bucket_name=S3_BUCKET_NAME,
+        s3_key=f"reports/{os.path.basename(REPORT_FILE)}"
+    )
+
+    # Upload JSON Report
     save_json_report()
+
+    # SNS Notification
+    subject = "Enterprise Kubernetes Health Report"
+
+    message = f"""
+Enterprise Kubernetes Health Report
+
+Cluster Health Check Completed Successfully
+
+Overall Health:
+{report_data["execution_summary"]["overall_health"]}
+
+Total Issues:
+{report_data["execution_summary"]["total_issues"]}
+
+Execution Time:
+{report_data["execution_summary"]["execution_time_seconds"]} seconds
+
+Generated At:
+{REPORT_TIME.strftime("%Y-%m-%d %H:%M:%S")}
+
+S3 Bucket:
+{S3_BUCKET_NAME}
+
+Reports Uploaded:
+
+TXT:
+{os.path.basename(REPORT_FILE)}
+
+JSON:
+{os.path.basename(JSON_REPORT_FILE)}
+"""
+
+    send_notification(
+        topic_arn=SNS_TOPIC_ARN,
+        subject=subject,
+        message=message
+    )
 
 
 if __name__ == "__main__":
-
     main()
