@@ -11,7 +11,8 @@ echo ""
 echo "Checking Node Exporter Pods..."
 echo "----------------------------------------"
 
-kubectl get pods -n "$NAMESPACE" -l "$APP_LABEL"
+kubectl get pods -n "$NAMESPACE" | grep node-exporter || \
+echo "No Node Exporter pods found."
 
 echo ""
 echo "Checking Node Exporter Service..."
