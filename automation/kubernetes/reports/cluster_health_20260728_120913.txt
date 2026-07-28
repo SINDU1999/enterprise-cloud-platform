@@ -1,0 +1,195 @@
+
+======================================================================
+                 ENTERPRISE KUBERNETES HEALTH REPORT                  
+======================================================================
+Generated At       : 2026-07-28 12:09:13
+Current Context    : arn:aws:eks:ap-south-1:908209635299:cluster/fincore-dev-eks-cluster
+Cluster Name       : arn:aws:eks:ap-south-1:908209635299:cluster/fincore-dev-eks-cluster
+Kubernetes Version : v1.33.13-eks-8f14419
+
+----------------------------------------------------------------------
+Node Health
+----------------------------------------------------------------------
+
+✅ Node Name          : ip-10-0-11-146.ap-south-1.compute.internal
+   Status             : Ready
+   Internal IP        : 10.0.11.146
+   Kubernetes Version : v1.33.13-eks-bca9cf6
+
+
+✅ Node Name          : ip-10-0-12-204.ap-south-1.compute.internal
+   Status             : Ready
+   Internal IP        : 10.0.12.204
+   Kubernetes Version : v1.33.13-eks-bca9cf6
+
+----------------------------------------------------------------------
+Total Nodes      : 2
+Ready Nodes      : 2
+Not Ready Nodes  : 0
+
+----------------------------------------------------------------------
+Namespace Summary
+----------------------------------------------------------------------
+📁 argocd
+📁 default
+📁 demo
+📁 kube-node-lease
+📁 kube-public
+📁 kube-system
+📁 monitoring
+----------------------------------------------------------------------
+Total Namespaces : 7
+
+----------------------------------------------------------------------
+Pod Health
+----------------------------------------------------------------------
+Total Pods          : 30
+Running Pods        : 30
+Pending Pods        : 0
+Failed Pods         : 0
+Succeeded Pods      : 0
+Unknown Pods        : 0
+
+Detected Pod Issues
+----------------------------------------------------------------------
+❌ CrashLoopBackOff : 1
+----------------------------------------------------------------------
+
+----------------------------------------------------------------------
+Deployment Health
+----------------------------------------------------------------------
+❌ argocd/argocd-applicationset-controller (0/1)
+✅ argocd/argocd-dex-server (1/1)
+✅ argocd/argocd-notifications-controller (1/1)
+✅ argocd/argocd-redis (1/1)
+✅ argocd/argocd-repo-server (1/1)
+✅ argocd/argocd-server (1/1)
+✅ demo/enterprise-cloud-platform (2/2)
+✅ kube-system/coredns (2/2)
+✅ kube-system/ebs-csi-controller (2/2)
+✅ kube-system/metrics-server (1/1)
+✅ monitoring/monitoring-grafana (1/1)
+✅ monitoring/monitoring-kube-prometheus-operator (1/1)
+✅ monitoring/monitoring-kube-state-metrics (1/1)
+----------------------------------------------------------------------
+Total Deployments : 13
+Healthy           : 12
+Unhealthy         : 1
+
+----------------------------------------------------------------------
+Service Summary
+----------------------------------------------------------------------
+✅ argocd/argocd-applicationset-controller (ClusterIP)
+✅ argocd/argocd-dex-server (ClusterIP)
+✅ argocd/argocd-metrics (ClusterIP)
+✅ argocd/argocd-notifications-controller-metrics (ClusterIP)
+✅ argocd/argocd-redis (ClusterIP)
+✅ argocd/argocd-repo-server (ClusterIP)
+✅ argocd/argocd-server (LoadBalancer)
+✅ argocd/argocd-server-metrics (ClusterIP)
+✅ default/kubernetes (ClusterIP)
+✅ demo/enterprise-cloud-platform (LoadBalancer)
+✅ kube-system/eks-extension-metrics-api (ClusterIP)
+✅ kube-system/kube-dns (ClusterIP)
+✅ kube-system/metrics-server (ClusterIP)
+✅ kube-system/monitoring-kube-prometheus-coredns (ClusterIP)
+✅ kube-system/monitoring-kube-prometheus-kube-controller-manager (ClusterIP)
+✅ kube-system/monitoring-kube-prometheus-kube-etcd (ClusterIP)
+✅ kube-system/monitoring-kube-prometheus-kube-proxy (ClusterIP)
+✅ kube-system/monitoring-kube-prometheus-kube-scheduler (ClusterIP)
+✅ kube-system/monitoring-kube-prometheus-kubelet (ClusterIP)
+✅ monitoring/alertmanager-operated (ClusterIP)
+✅ monitoring/loki (ClusterIP)
+✅ monitoring/loki-headless (ClusterIP)
+✅ monitoring/loki-memberlist (ClusterIP)
+✅ monitoring/monitoring-grafana (LoadBalancer)
+✅ monitoring/monitoring-kube-prometheus-alertmanager (ClusterIP)
+✅ monitoring/monitoring-kube-prometheus-operator (ClusterIP)
+✅ monitoring/monitoring-kube-prometheus-prometheus (ClusterIP)
+✅ monitoring/monitoring-kube-state-metrics (ClusterIP)
+✅ monitoring/monitoring-prometheus-node-exporter (ClusterIP)
+✅ monitoring/prometheus-operated (ClusterIP)
+----------------------------------------------------------------------
+Total Services : 30
+
+----------------------------------------------------------------------
+Persistent Volumes
+----------------------------------------------------------------------
+📦 pvc-4abce800-18c6-408e-80ae-fd3eee571037 (Bound)
+----------------------------------------------------------------------
+Total PVs : 1
+
+----------------------------------------------------------------------
+Persistent Volume Claims
+----------------------------------------------------------------------
+📁 monitoring/storage-loki-0 (Bound)
+----------------------------------------------------------------------
+Total PVCs : 1
+
+----------------------------------------------------------------------
+StatefulSets
+----------------------------------------------------------------------
+✅ argocd/argocd-application-controller
+✅ monitoring/alertmanager-monitoring-kube-prometheus-alertmanager
+✅ monitoring/loki
+✅ monitoring/prometheus-monitoring-kube-prometheus-prometheus
+----------------------------------------------------------------------
+Total StatefulSets : 4
+
+----------------------------------------------------------------------
+DaemonSets
+----------------------------------------------------------------------
+✅ kube-system/aws-node
+✅ kube-system/ebs-csi-node
+✅ kube-system/ebs-csi-node-windows
+✅ kube-system/kube-proxy
+✅ monitoring/monitoring-prometheus-node-exporter
+✅ monitoring/promtail
+----------------------------------------------------------------------
+Total DaemonSets : 6
+
+----------------------------------------------------------------------
+Horizontal Pod Autoscalers
+----------------------------------------------------------------------
+✅ demo/enterprise-cloud-platform
+   Current Replicas : 2
+   Desired Replicas : 2
+
+
+----------------------------------------------------------------------
+Recent Warning Events
+----------------------------------------------------------------------
+⚠ Namespace : argocd
+  Object    : Pod/argocd-applicationset-controller-78987f86b4-7822n
+  Reason    : BackOff
+  Message   : Back-off restarting failed container argocd-applicationset-controller in pod argocd-applicationset-controller-78987f86b4-7822n_argocd(4fe4bb95-0178-4ef3-ae69-7011662b0c68)
+
+
+----------------------------------------------------------------------
+Detected Issues
+----------------------------------------------------------------------
+❌ Pod | argocd | argocd-applicationset-controller-78987f86b4-7822n | CrashLoopBackOff
+❌ Deployment | argocd | argocd-applicationset-controller | Available Replicas 0/1
+----------------------------------------------------------------------
+Total Issues : 2
+
+----------------------------------------------------------------------
+Recommendations
+----------------------------------------------------------------------
+• Check pod logs using:
+  kubectl logs <pod-name> -n <namespace>
+
+• Investigate deployment rollout:
+  kubectl describe deployment <deployment>
+
+
+======================================================================
+                        OVERALL CLUSTER HEALTH                        
+======================================================================
+🟡 WARNING
+
+Total Issues Detected : 2
+
+Execution Time       : 4.53 seconds
+
+✅ JSON report saved to: C:\Users\sindu\Downloads\Projects\enterprise-cloud-platform\automation\kubernetes\reports\cluster_health_20260728_120913.json

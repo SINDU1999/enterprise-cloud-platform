@@ -11,6 +11,7 @@ from datetime import datetime
 import os
 import time
 import sys
+import json
 # ==========================================================
 # Script Start Time
 # ==========================================================
@@ -40,6 +41,11 @@ version_api = client.VersionApi()
 REPORT_TIME = datetime.now()
 
 issues = []
+# ==========================================================
+# Report Data
+# ==========================================================
+
+report_data = {}
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 REPORT_DIR = os.path.join(BASE_DIR, "reports")
@@ -49,6 +55,11 @@ os.makedirs(REPORT_DIR, exist_ok=True)
 REPORT_FILE = os.path.join(
     REPORT_DIR,
     f"cluster_health_{REPORT_TIME.strftime('%Y%m%d_%H%M%S')}.txt"
+)
+
+JSON_REPORT_FILE = os.path.join(
+    REPORT_DIR,
+    f"cluster_health_{REPORT_TIME.strftime('%Y%m%d_%H%M%S')}.json"
 )
 
 # ==========================================================
@@ -118,6 +129,13 @@ def cluster_information():
         print(f"Current Context    : {context_name}")
         print(f"Cluster Name       : {cluster_name}")
         print(f"Kubernetes Version : {version.git_version}")
+
+        report_data["cluster_information"] = {
+    "generated_at": REPORT_TIME.strftime("%Y-%m-%d %H:%M:%S"),
+    "current_context": context_name,
+    "cluster_name": cluster_name,
+    "kubernetes_version": version.git_version
+}
 
     except Exception as e:
 
@@ -196,6 +214,12 @@ def node_health():
     print(f"Total Nodes      : {len(nodes)}")
     print(f"Ready Nodes      : {ready_nodes}")
     print(f"Not Ready Nodes  : {not_ready_nodes}")
+
+    report_data["node_health"] = {
+    "total_nodes": len(nodes),
+    "ready_nodes": ready_nodes,
+    "not_ready_nodes": not_ready_nodes
+}
 
     return ready_nodes, not_ready_nodes
 # ==========================================================
@@ -401,6 +425,20 @@ def pod_health():
 
     print("-" * 70)
 
+    report_data["pod_health"] = {
+    "total_pods": len(pods),
+    "running": running,
+    "pending": pending,
+    "failed": failed,
+    "succeeded": succeeded,
+    "unknown": unknown,
+    "crashloopbackoff": crashloop,
+    "imagepullbackoff": imagepull,
+    "errimagepull": errimagepull,
+    "oomkilled": oomkilled,
+    "evicted": evicted
+}
+
     return {
         "running": running,
         "pending": pending,
@@ -451,6 +489,12 @@ def deployment_health():
     print(f"Total Deployments : {len(deployments)}")
     print(f"Healthy           : {len(deployments)-unhealthy}")
     print(f"Unhealthy         : {unhealthy}")
+
+    report_data["deployment_health"] = {
+    "total_deployments": len(deployments),
+    "healthy_deployments": len(deployments) - unhealthy,
+    "unhealthy_deployments": unhealthy
+}
 
     return unhealthy
 # ==========================================================
@@ -681,7 +725,7 @@ def recommendations():
 
             print("• Investigate deployment rollout:")
             print("  kubectl describe deployment <deployment>\n")
-            # ==========================================================
+           # ==========================================================
 # Overall Health
 # ==========================================================
 
@@ -692,18 +736,38 @@ def overall_health():
     total = len(issues)
 
     if total == 0:
-
         print("🟢 HEALTHY")
-
     elif total <= 5:
-
         print("🟡 WARNING")
-
     else:
-
         print("🔴 CRITICAL")
 
     print(f"\nTotal Issues Detected : {total}")
+
+    END_TIME = time.time()
+    EXECUTION_TIME = round(END_TIME - START_TIME, 2)
+
+    print(f"\nExecution Time       : {EXECUTION_TIME} seconds")
+
+    report_data["execution_summary"] = {
+        "execution_time_seconds": EXECUTION_TIME,
+        "total_issues": total,
+        "overall_health": (
+            "HEALTHY" if total == 0
+            else "WARNING" if total <= 5
+            else "CRITICAL"
+        )
+    }
+# Save JSON Report
+# ==========================================================
+
+def save_json_report():
+
+    with open(JSON_REPORT_FILE, "w", encoding="utf-8") as json_file:
+
+        json.dump(report_data, json_file, indent=4)
+
+    print(f"\n✅ JSON report saved to: {JSON_REPORT_FILE}")
 
 
 # ==========================================================
@@ -743,6 +807,8 @@ def main():
     recommendations()
 
     overall_health()
+
+    save_json_report()
 
 
 if __name__ == "__main__":

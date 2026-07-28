@@ -1,0 +1,36 @@
+{
+    "cluster_information": {
+        "generated_at": "2026-07-28 12:09:13",
+        "current_context": "arn:aws:eks:ap-south-1:908209635299:cluster/fincore-dev-eks-cluster",
+        "cluster_name": "arn:aws:eks:ap-south-1:908209635299:cluster/fincore-dev-eks-cluster",
+        "kubernetes_version": "v1.33.13-eks-8f14419"
+    },
+    "node_health": {
+        "total_nodes": 2,
+        "ready_nodes": 2,
+        "not_ready_nodes": 0
+    },
+    "pod_health": {
+        "total_pods": 30,
+        "running": 30,
+        "pending": 0,
+        "failed": 0,
+        "succeeded": 0,
+        "unknown": 0,
+        "crashloopbackoff": 1,
+        "imagepullbackoff": 0,
+        "errimagepull": 0,
+        "oomkilled": 0,
+        "evicted": 0
+    },
+    "deployment_health": {
+        "total_deployments": 13,
+        "healthy_deployments": 12,
+        "unhealthy_deployments": 1
+    },
+    "execution_summary": {
+        "execution_time_seconds": 4.53,
+        "total_issues": 2,
+        "overall_health": "WARNING"
+    }
+}
