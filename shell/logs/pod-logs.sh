@@ -4,23 +4,16 @@ echo "========================================"
 echo " Kubernetes Pod Logs"
 echo "========================================"
 
-NAMESPACE="default"
-
-PODS=$(kubectl get pods -n "$NAMESPACE" --no-headers -o custom-columns=":metadata.name")
-
-if [ -z "$PODS" ]; then
-    echo "No pods found in namespace: $NAMESPACE"
-    exit 0
-fi
-
-for POD in $PODS
+kubectl get pods --all-namespaces --no-headers | while read namespace pod rest
 do
     echo ""
-    echo "----------------------------------------"
-    echo "Logs for Pod: $POD"
-    echo "----------------------------------------"
+    echo "============================================================"
+    echo "Namespace : $namespace"
+    echo "Pod       : $pod"
+    echo "============================================================"
 
-    kubectl logs "$POD" -n "$NAMESPACE" --tail=20
+    kubectl logs -n "$namespace" "$pod" --tail=20 2>/dev/null || \
+    echo "Unable to fetch logs (multiple containers or pod not ready)."
 done
 
 echo ""
