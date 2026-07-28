@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Python Dependencies') {
+            steps {
+                sh '''
+                    python3 -m pip install --upgrade pip
+                    python3 -m pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Run Cluster Health Report') {
+            steps {
+                sh '''
+                    python3 -m automation.kubernetes.cluster_health
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'automation/kubernetes/reports/*', fingerprint: true
+        }
+
+        success {
+            echo 'Cluster Health Report generated successfully.'
+        }
+
+        failure {
+            echo 'Cluster Health Report generation failed.'
+        }
+    }
+}
