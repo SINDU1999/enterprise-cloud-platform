@@ -1,3 +1,7 @@
+###############################################################################
+# ALB Security Group
+###############################################################################
+
 resource "aws_security_group" "alb" {
 
   name        = "${var.project_name}-${var.environment}-alb-sg"
@@ -36,6 +40,10 @@ resource "aws_security_group" "alb" {
   }
 }
 
+###############################################################################
+# EKS Cluster Security Group
+###############################################################################
+
 resource "aws_security_group" "eks_cluster" {
 
   name        = "${var.project_name}-${var.environment}-eks-cluster-sg"
@@ -55,6 +63,10 @@ resource "aws_security_group" "eks_cluster" {
     Name = "${var.project_name}-${var.environment}-eks-cluster-sg"
   }
 }
+
+###############################################################################
+# EKS Worker Nodes Security Group
+###############################################################################
 
 resource "aws_security_group" "eks_nodes" {
 
@@ -77,16 +89,39 @@ resource "aws_security_group" "eks_nodes" {
 }
 
 ###############################################################################
+# RDS Security Group
+###############################################################################
+
+resource "aws_security_group" "rds" {
+
+  name        = "${var.project_name}-${var.environment}-rds-sg"
+  description = "Security Group for PostgreSQL RDS"
+  vpc_id      = var.vpc_id
+
+  egress {
+    description = "Allow all outbound traffic"
+
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-rds-sg"
+  }
+}
+
+###############################################################################
 # Security Group Rules
 ###############################################################################
 
-# Allow HTTP traffic from ALB to EKS Worker Nodes
 resource "aws_security_group_rule" "alb_to_nodes_http" {
 
-  type      = "ingress"
-  from_port = 80
-  to_port   = 80
-  protocol  = "tcp"
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
 
   security_group_id        = aws_security_group.eks_nodes.id
   source_security_group_id = aws_security_group.alb.id
@@ -94,13 +129,12 @@ resource "aws_security_group_rule" "alb_to_nodes_http" {
   description = "Allow HTTP traffic from ALB to EKS Worker Nodes"
 }
 
-# Allow Worker Nodes to communicate with EKS Control Plane
 resource "aws_security_group_rule" "nodes_to_cluster_https" {
 
-  type      = "ingress"
-  from_port = 443
-  to_port   = 443
-  protocol  = "tcp"
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
 
   security_group_id        = aws_security_group.eks_cluster.id
   source_security_group_id = aws_security_group.eks_nodes.id
@@ -108,16 +142,28 @@ resource "aws_security_group_rule" "nodes_to_cluster_https" {
   description = "Allow Worker Nodes to communicate with EKS Control Plane"
 }
 
-# Allow communication between Worker Nodes
 resource "aws_security_group_rule" "node_to_node" {
 
-  type      = "ingress"
-  from_port = 0
-  to_port   = 65535
-  protocol  = "tcp"
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 65535
+  protocol          = "tcp"
 
   security_group_id = aws_security_group.eks_nodes.id
   self              = true
 
   description = "Allow communication between EKS Worker Nodes"
+}
+
+resource "aws_security_group_rule" "eks_nodes_to_rds" {
+
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+
+  security_group_id        = aws_security_group.rds.id
+  source_security_group_id = aws_security_group.eks_nodes.id
+
+  description = "Allow PostgreSQL access from EKS Worker Nodes"
 }

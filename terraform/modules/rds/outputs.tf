@@ -1,0 +1,24 @@
+output "db_instance_id" {
+  description = "RDS instance identifier"
+  value       = aws_db_instance.this.id
+}
+
+output "db_instance_arn" {
+  description = "RDS instance ARN"
+  value       = aws_db_instance.this.arn
+}
+
+output "db_endpoint" {
+  description = "RDS endpoint"
+  value       = aws_db_instance.this.endpoint
+}
+
+output "db_port" {
+  description = "RDS port"
+  value       = aws_db_instance.this.port
+}
+
+output "db_name" {
+  description = "Database name"
+  value       = aws_db_instance.this.db_name
+}

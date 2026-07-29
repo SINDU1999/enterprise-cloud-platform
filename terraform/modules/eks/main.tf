@@ -6,7 +6,6 @@ resource "aws_eks_cluster" "this" {
   version = "1.33"
 
   vpc_config {
-
     subnet_ids = var.private_subnet_ids
 
     security_group_ids = [
@@ -25,6 +24,13 @@ resource "aws_eks_cluster" "this" {
     "scheduler"
   ]
 
+  lifecycle {
+    ignore_changes = [
+      compute_config,
+      storage_config
+    ]
+  }
+
   tags = {
     Name        = "${var.project_name}-${var.environment}-eks-cluster"
     Project     = var.project_name
@@ -32,22 +38,15 @@ resource "aws_eks_cluster" "this" {
     ManagedBy   = "Terraform"
   }
 }
-
-################################################################################
-# EKS Managed Node Group
-################################################################################
-
 resource "aws_eks_node_group" "this" {
 
   cluster_name    = aws_eks_cluster.this.name
   node_group_name = "${var.project_code}-${var.environment}-node-group"
 
   node_role_arn = var.node_role_arn
-
-  subnet_ids = var.private_subnet_ids
+  subnet_ids    = var.private_subnet_ids
 
   scaling_config {
-
     desired_size = 2
     min_size     = 2
     max_size     = 4
@@ -57,11 +56,9 @@ resource "aws_eks_node_group" "this" {
     var.node_instance_type
   ]
 
-  disk_size = var.disk_size
-
+  disk_size     = var.disk_size
   capacity_type = "ON_DEMAND"
-
-  ami_type = "AL2023_x86_64_STANDARD"
+  ami_type      = "AL2023_x86_64_STANDARD"
 
   update_config {
     max_unavailable = 1

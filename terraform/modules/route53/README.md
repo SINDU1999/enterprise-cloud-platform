@@ -1,26 +1,37 @@
-# Route53 Terraform Module
+# Route53 Module
 
-## Purpose
+## Overview
 
-This module provisions Amazon Route 53 DNS resources for the Enterprise Cloud Platform.
+This module provisions Route53 DNS resources for the Enterprise Cloud Platform.
+
+## Features
+
+- Private Hosted Zone
+- VPC Association
+- DNS Record Creation
+- Reusable variables
+- Standard tagging
 
 ## Resources
 
-- Hosted Zone
-- Alias Record
-- ALB DNS Mapping
+- aws_route53_zone
+- aws_route53_record
 
 ## Inputs
 
-| Name | Description |
-|------|-------------|
-| hosted_zone_name | Hosted Zone Name |
-| record_name | DNS Record Name |
-| alb_dns_name | ALB DNS Name |
-| alb_zone_id | ALB Hosted Zone ID |
+- project_name
+- environment
+- zone_name
+- vpc_id
+- create_private_zone
+- record_name
+- record_type
+- record_ttl
+- record_value
 
 ## Outputs
 
 - Hosted Zone ID
+- Hosted Zone Name
+- Record FQDN
 - Name Servers
-- ALB Alias Record

@@ -1,11 +1,19 @@
 output "hosted_zone_id" {
-  value = aws_route53_zone.this.zone_id
+  description = "Route53 Hosted Zone ID"
+  value       = aws_route53_zone.this[0].zone_id
 }
 
-output "hosted_zone_name_servers" {
-  value = aws_route53_zone.this.name_servers
+output "hosted_zone_name" {
+  description = "Route53 Hosted Zone Name"
+  value       = aws_route53_zone.this[0].name
 }
 
-output "alb_dns_record" {
-  value = aws_route53_record.alb_alias.fqdn
+output "record_fqdn" {
+  description = "Fully Qualified Domain Name"
+  value       = aws_route53_record.this.fqdn
+}
+
+output "name_servers" {
+  description = "Hosted Zone Name Servers"
+  value       = try(aws_route53_zone.this[0].name_servers, [])
 }
